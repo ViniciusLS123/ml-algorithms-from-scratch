@@ -1,0 +1,47 @@
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+
+#define K 3
+
+typedef struct { double f[2]; char label[10]; } Sample;
+typedef struct { double dist;  char label[10]; } Neighbor;
+
+double euclidean(double a[], double b[]) {
+    return sqrt((a[0]-b[0])*(a[0]-b[0]) + (a[1]-b[1])*(a[1]-b[1]));
+}
+
+char* knn(Sample train[], int n, double point[]) {
+    Neighbor nb[9];
+    for (int i = 0; i < n; i++) {
+        nb[i].dist = euclidean(train[i].f, point);
+        strcpy(nb[i].label, train[i].label);
+    }
+    /* bubble sort by distance */
+    for (int i = 0; i < n-1; i++)
+        for (int j = i+1; j < n; j++)
+            if (nb[j].dist < nb[i].dist) {
+                Neighbor t = nb[i]; nb[i] = nb[j]; nb[j] = t;
+            }
+    int mac=0, lar=0, uva=0;
+    for (int i = 0; i < K; i++) {
+        if (strcmp(nb[i].label,"Maca")   ==0) mac++;
+        if (strcmp(nb[i].label,"Laranja")==0) lar++;
+        if (strcmp(nb[i].label,"Uva")    ==0) uva++;
+    }
+    if (mac>=lar && mac>=uva) return "Maca";
+    if (lar>=mac && lar>=uva) return "Laranja";
+    return "Uva";
+}
+
+int main() {
+    Sample train[] = {
+        {{180,6},"Maca"},{{170,7},"Maca"},{{190,5},"Maca"},
+        {{130,8},"Laranja"},{{140,9},"Laranja"},{{120,8},"Laranja"},
+        {{10,9},"Uva"},{{8,8},"Uva"},{{12,9},"Uva"}
+    };
+    double tests[3][2] = {{175,6},{125,8},{9,9}};
+    char *names[3] = {"175g docura 6","125g docura 8","9g docura 9"};
+    for (int i=0; i<3; i++)
+        printf("[%s] -> %s\n", names[i], knn(train,9,tests[i]));
+}
