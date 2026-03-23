@@ -1,0 +1,73 @@
+import math
+from collections import defaultdict
+ 
+# ==============================================
+# Naive Bayes — from scratch
+# Author: Vinícius De Lima Silva
+# Course: Curso Técnico em IA — Colégio FECAP
+# ==============================================
+ 
+# Dataset: mensagens de email [palavras] -> spam(1) ou nao(0)
+dataset = [
+    (["ganhe", "dinheiro", "rapido", "gratis", "clique"], 1),
+    (["oferta", "exclusiva", "gratis", "premio", "ganhe"], 1),
+    (["clique", "aqui", "ganhe", "premio", "urgente"], 1),
+    (["dinheiro", "facil", "oferta", "gratis", "agora"], 1),
+    (["urgente", "responda", "ganhe", "clique", "gratis"], 1),
+    (["reuniao", "amanha", "projeto", "equipe", "prazo"], 0),
+    (["relatorio", "enviado", "revisao", "documento", "prazo"], 0),
+    (["confirme", "presenca", "reuniao", "equipe", "agenda"], 0),
+    (["atualizar", "projeto", "status", "equipe", "reuniao"], 0),
+    (["documento", "assinatura", "contrato", "prazo", "revisao"], 0),
+]
+ 
+class NaiveBayes:
+    def fit(self, dataset):
+        self.classes = list(set(label for _, label in dataset))
+        self.class_count = defaultdict(int)
+        self.word_count = defaultdict(lambda: defaultdict(int))
+        self.vocab = set()
+ 
+        for words, label in dataset:
+            self.class_count[label] += 1
+            for w in words:
+                self.word_count[label][w] += 1
+                self.vocab.add(w)
+ 
+        self.total = len(dataset)
+        self.vocab_size = len(self.vocab)
+ 
+    def predict(self, words):
+        scores = {}
+        for c in self.classes:
+            # log P(class)
+            score = math.log(self.class_count[c] / self.total)
+            total_words = sum(self.word_count[c].values())
+            for w in words:
+                # Laplace smoothing
+                count = self.word_count[c].get(w, 0) + 1
+                score += math.log(count / (total_words + self.vocab_size))
+            scores[c] = score
+        return max(scores, key=scores.get)
+ 
+# Treina
+model = NaiveBayes()
+model.fit(dataset)
+ 
+# Testa
+tests = [
+    (["ganhe", "gratis", "clique", "premio"], "Email A"),
+    (["reuniao", "projeto", "equipe", "prazo"], "Email B"),
+    (["gratis", "reuniao", "ganhe", "documento"], "Email C"),
+]
+ 
+labels = {1: "SPAM", 0: "NAO SPAM"}
+ 
+print("=" * 48)
+print("  Naive Bayes — Classificador de Spam")
+print("=" * 48)
+for words, name in tests:
+    pred = model.predict(words)
+    print(f"  {name}: {words}")
+    print(f"  -> {labels[pred]}")
+    print("-" * 48)
