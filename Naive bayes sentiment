@@ -1,0 +1,80 @@
+import math
+from collections import defaultdict
+
+# ============================================================
+# Naive Bayes — Sentiment Analysis (from scratch)
+# Author: Vinícius De Lima Silva
+# Course: Curso Técnico em IA — Colégio FECAP
+# ============================================================
+
+dataset = [
+    (["otimo", "excelente", "amei", "perfeito", "incrivel"],   "positivo"),
+    (["maravilhoso", "feliz", "gostei", "recomendo", "top"],    "positivo"),
+    (["bom", "satisfeito", "legal", "curtiu", "adorei"],        "positivo"),
+    (["rapido", "eficiente", "otimo", "amei", "entrega"],       "positivo"),
+    (["perfeito", "top", "recomendo", "gostei", "voltarei"],    "positivo"),
+    (["pessimo", "horrivel", "odiei", "travou", "lento"],       "negativo"),
+    (["ruim", "decepcionante", "nunca", "mais", "odiei"],       "negativo"),
+    (["horrivel", "lento", "bugado", "travou", "pessimo"],      "negativo"),
+    (["decepcionante", "ruim", "problema", "erro", "lento"],    "negativo"),
+    (["odiei", "pessimo", "nunca", "voltarei", "horrivel"],     "negativo"),
+]
+
+class NaiveBayes:
+    def fit(self, data):
+        self.classes = list(set(l for _, l in data))
+        self.cc  = defaultdict(int)
+        self.wc  = defaultdict(lambda: defaultdict(int))
+        self.vocab = set()
+        for words, label in data:
+            self.cc[label] += 1
+            for w in words:
+                self.wc[label][w] += 1
+                self.vocab.add(w)
+        self.total = len(data)
+        self.vs    = len(self.vocab)
+
+    def predict(self, words):
+        scores = {}
+        for c in self.classes:
+            s  = math.log(self.cc[c] / self.total)
+            tw = sum(self.wc[c].values())
+            for w in words:
+                s += math.log((self.wc[c].get(w, 0) + 1) / (tw + self.vs))
+            scores[c] = s
+        return max(scores, key=scores.get)
+
+    def confidence(self, words):
+        scores = {}
+        for c in self.classes:
+            s  = math.log(self.cc[c] / self.total)
+            tw = sum(self.wc[c].values())
+            for w in words:
+                s += math.log((self.wc[c].get(w, 0) + 1) / (tw + self.vs))
+            scores[c] = s
+        m    = max(scores.values())
+        exps = {c: math.exp(v - m) for c, v in scores.items()}
+        tot  = sum(exps.values())
+        return {c: exps[c] / tot for c in exps}
+
+model = NaiveBayes()
+model.fit(dataset)
+
+reviews = [
+    (["amei", "otimo", "recomendo", "perfeito"],          "Review 1"),
+    (["pessimo", "travou", "horrivel", "nunca"],           "Review 2"),
+    (["gostei", "bom", "rapido", "entrega"],               "Review 3"),
+    (["decepcionante", "lento", "ruim", "problema"],       "Review 4"),
+    (["incrivel", "maravilhoso", "top", "voltarei"],       "Review 5"),
+]
+
+print("=" * 54)
+print("  Naive Bayes — Análise de Sentimento")
+print("=" * 54)
+for words, name in reviews:
+    pred = model.predict(words)
+    conf = model.confidence(words)
+    pct  = conf[pred] * 100
+    print(f"  {name}: {words}")
+    print(f"  → {pred.upper()} ({pct:.1f}% confiança)")
+    print("-" * 54)
