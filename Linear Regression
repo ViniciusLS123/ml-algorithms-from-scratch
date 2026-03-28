@@ -1,0 +1,73 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+class LinearRegressionFromScratch:
+    def __init__(self):
+        self.m = 0  # slope
+        self.b = 0  # intercept
+
+    def fit(self, X, y):
+        """
+        Treina o modelo usando a fórmula analítica (mínimos quadrados)
+        """
+        n = len(X)
+
+        mean_x = np.mean(X)
+        mean_y = np.mean(y)
+
+        numerator = np.sum((X - mean_x) * (y - mean_y))
+        denominator = np.sum((X - mean_x) ** 2)
+
+        self.m = numerator / denominator
+        self.b = mean_y - self.m * mean_x
+
+    def predict(self, X):
+        """
+        Faz previsões
+        """
+        return self.m * X + self.b
+
+    def evaluate(self, y_true, y_pred):
+        """
+        Calcula R² e MSE
+        """
+        ss_total = np.sum((y_true - np.mean(y_true)) ** 2)
+        ss_residual = np.sum((y_true - y_pred) ** 2)
+
+        r2 = 1 - (ss_residual / ss_total)
+        mse = np.mean((y_true - y_pred) ** 2)
+
+        return r2, mse
+
+
+def plot_regression(X, y, y_pred):
+    plt.figure(figsize=(8, 5))
+    plt.scatter(X, y)
+    plt.plot(X, y_pred)
+    plt.title("Linear Regression (From Scratch)")
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.grid()
+    plt.savefig("plot.png")  # salva imagem pro README
+    plt.show()
+
+
+if __name__ == "__main__":
+    # Dataset simples
+    X = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    y = np.array([2, 4, 5, 4, 5, 7, 8, 9, 10, 12])
+
+    model = LinearRegressionFromScratch()
+    model.fit(X, y)
+
+    predictions = model.predict(X)
+
+    r2, mse = model.evaluate(y, predictions)
+
+    print(f"Slope (m): {model.m:.4f}")
+    print(f"Intercept (b): {model.b:.4f}")
+    print(f"R² Score: {r2:.4f}")
+    print(f"MSE: {mse:.4f}")
+
+    plot_regression(X, y, predictions)
