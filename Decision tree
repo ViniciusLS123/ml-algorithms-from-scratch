@@ -1,0 +1,98 @@
+import numpy as np
+
+
+class DecisionTree:
+    def __init__(self, max_depth=2):
+        self.max_depth = max_depth
+        self.tree = None
+
+    def fit(self, X, y):
+        self.tree = self._build_tree(X, y, depth=0)
+
+    def _gini(self, y):
+        classes = np.unique(y)
+        impurity = 1
+        for c in classes:
+            p = np.sum(y == c) / len(y)
+            impurity -= p ** 2
+        return impurity
+
+    def _best_split(self, X, y):
+        best_feature, best_threshold, best_gain = None, None, -1
+        parent_gini = self._gini(y)
+
+        for feature in range(X.shape[1]):
+            thresholds = np.unique(X[:, feature])
+            for t in thresholds:
+                left = y[X[:, feature] <= t]
+                right = y[X[:, feature] > t]
+
+                if len(left) == 0 or len(right) == 0:
+                    continue
+
+                gini_left = self._gini(left)
+                gini_right = self._gini(right)
+
+                weight_left = len(left) / len(y)
+                weight_right = len(right) / len(y)
+
+                gain = parent_gini - (weight_left * gini_left + weight_right * gini_right)
+
+                if gain > best_gain:
+                    best_feature = feature
+                    best_threshold = t
+                    best_gain = gain
+
+        return best_feature, best_threshold
+
+    def _build_tree(self, X, y, depth):
+        if depth >= self.max_depth or len(np.unique(y)) == 1:
+            return np.bincount(y).argmax()
+
+        feature, threshold = self._best_split(X, y)
+
+        if feature is None:
+            return np.bincount(y).argmax()
+
+        left_idx = X[:, feature] <= threshold
+        right_idx = X[:, feature] > threshold
+
+        return {
+            "feature": feature,
+            "threshold": threshold,
+            "left": self._build_tree(X[left_idx], y[left_idx], depth + 1),
+            "right": self._build_tree(X[right_idx], y[right_idx], depth + 1),
+        }
+
+    def _predict_one(self, x, node):
+        if not isinstance(node, dict):
+            return node
+
+        if x[node["feature"]] <= node["threshold"]:
+            return self._predict_one(x, node["left"])
+        else:
+            return self._predict_one(x, node["right"])
+
+    def predict(self, X):
+        return np.array([self._predict_one(x, self.tree) for x in X])
+
+
+if __name__ == "__main__":
+    # Dataset simples (classificação binária)
+    X = np.array([
+        [2, 3],
+        [1, 5],
+        [3, 2],
+        [8, 7],
+        [9, 6],
+        [7, 8]
+    ])
+
+    y = np.array([0, 0, 0, 1, 1, 1])
+
+    model = DecisionTree(max_depth=2)
+    model.fit(X, y)
+
+    predictions = model.predict(X)
+
+    print("Predictions:", predictions)
